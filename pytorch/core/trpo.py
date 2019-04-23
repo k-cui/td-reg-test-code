@@ -63,6 +63,18 @@ def trpo_step_td(policy_net, value_net, states, actions, next_states, rewards, m
             td_err2 = td_err2 / td_err2.std()
 
 
+    elif method_name == "TRPO-RET-GAE-CLIP":
+        values_pred = value_net(states)
+        target_v = returns.to(device)
+        td_err2 = (values_pred - target_v).pow(2).detach()  # detach() just to be safe
+
+
+    elif method_name == "TEST":
+        values_pred = value_net(states)
+        target_v = returns.to(device)
+        td_err2 = (values_pred - target_v).pow(2).detach()  # detach() just to be safe
+
+
     """update policy"""
     fixed_log_probs = policy_net.get_log_prob(states, actions).data
 
@@ -72,6 +84,22 @@ def trpo_step_td(policy_net, value_net, states, actions, next_states, rewards, m
 
         if method_name == "TRPO-TD" or method_name == "TRPO-RET-MC" or method_name == "TRPO-RET-GAE":
             action_loss = (-advantages + lambda_td * td_err2) * torch.exp(log_probs - fixed_log_probs)
+        elif method_name == "TRPO-RET-GAE-CLIP":
+            ratio = td_err2.norm() / advantages.norm()
+            trpo_step_td.curr_clip_ratio = ratio
+            if trpo_step_td.max_clip_ratio < ratio:
+                trpo_step_td.max_clip_ratio = ratio
+            action_loss = (-advantages + td_err2 / trpo_step_td.max_clip_ratio) * torch.exp(log_probs - fixed_log_probs)
+        elif method_name == "TEST":
+            ratio = td_err2.norm() / advantages.norm()
+            trpo_step_td.curr_clip_ratio = ratio
+            if trpo_step_td.max_clip_ratio < ratio:
+                trpo_step_td.max_clip_ratio = ratio
+            abs_td_scaled = td_err2 / trpo_step_td.max_clip_ratio
+            clipped_td_scaled = torch.min(abs_td_scaled, advantages.abs())
+            signed_td_scaled = -advantages.sign() * clipped_td_scaled
+            regularized_advantages = advantages + signed_td_scaled
+            action_loss = -regularized_advantages * torch.exp(log_probs - fixed_log_probs)
         elif method_name == "TRPO":   # standard TRPO
             action_loss = (-advantages) * torch.exp(log_probs - fixed_log_probs)
 

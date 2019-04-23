@@ -18,7 +18,7 @@ def arg_parser():
     parser.add_argument('--learning_rate_v', type=float, default=3e-4, help='learning rate GAE')
 
     ## Method name
-    parser.add_argument('--method_name', action="store", default="TRPO", choices=["TRPO", "TRPO-TD", "TRPO-RET-MC", "TRPO-RET-GAE"], help='Name of method')
+    parser.add_argument('--method_name', action="store", default="TRPO", choices=["TRPO", "TRPO-TD", "TRPO-RET-MC", "TRPO-RET-GAE", "TRPO-RET-GAE-CLIP", "TEST"], help='Name of method')
 
     ## RL and TRPO options. Most of these comes from baselines.trpo_mpi.default
     parser.add_argument('--log_std', type=float, default=0, help='log std for the policy (default: 0)')

@@ -90,8 +90,10 @@ def learn_model(args):
 
         if args.method_name == "TRPO-RET-MC":
             returns = mc_returns.detach()       # detach() does not matter since we back prop policy network only.
-        elif args.method_name == "TRPO-RET-GAE":
+        elif args.method_name == "TRPO-RET-GAE" or args.method_name == "TRPO-RET-GAE-CLIP":
             returns = lambda_returns.detach()   # detach() does not matter actually.
+        elif args.method_name == "TEST":
+            returns = lambda_returns.detach()
         else:
             returns = 0   # returns is not used for TRPO and TRPO-TD.
 
@@ -111,6 +113,10 @@ def learn_model(args):
     """create agent"""
     agent = Agent(env, policy_net, render=False)
     agent_test = Agent(env_test, policy_net, mean_action=True, render=args.render)
+
+    """create clip vars"""
+    trpo_step_td.max_clip_ratio = 0
+    trpo_step_td.curr_clip_ratio = 0
 
     """ The actual learning loop"""
     for i_iter in range(args.rl_max_iter_num):
@@ -149,6 +155,7 @@ def learn_model(args):
             result_text += " | [R] " + t_format("Avg: %.2f (%.2f)" % (log['avg_reward'], log['std_reward']), 2)
             result_text += " | [R_test] " + t_format("min: %.2f" % log_test['min_reward'], 1) + t_format("max: %.2f" % log_test['max_reward'], 1) \
                             + t_format("Avg: %.2f (%.2f)" % (log_test['avg_reward'], log_test['std_reward']), 2)
+            result_text += " | [RATIO] " + t_format("max: %.3f, curr: %.3f" % (trpo_step_td.max_clip_ratio, trpo_step_td.curr_clip_ratio))
             print(result_text)
 
             with open(args.rl_filename, 'a') as f:
