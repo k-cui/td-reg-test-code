@@ -1,4 +1,4 @@
-function run_single(trial, do_retrace, reg_type)
+function runC_single(trial, do_retrace, reg_type)
 
 clear basis_fourier
 rng(trial)
@@ -59,6 +59,7 @@ lambda_trace = 0.95;
 
 bfsV = bfs;
 omega = (rand(bfsV(),1)-0.5)*2;
+omega_c = zeros(bfs() + mdp.daction + 1, 1);
 
 data = [];
 varnames = {'r','s','nexts','a','t','terminal','logprob'};
@@ -96,10 +97,17 @@ while iter <= maxiter
     A = gae(data,V,mdp.gamma,lambda_trace,prob_ratio);
     TD = gae(data,V,mdp.gamma,0,prob_ratio);
     td_history(iter) = mean(TD.^2);
+    
+    % TODO Project A to compatible function space. Bad.
+    % Also tried: Projecting A+V=Q and using projected Q (optionally
+    % subtract V baseline again). Same result. The A_unnorm is used in the
+    % working method as well, so it is not the normalization.
+    dlogpi = policy.dlogPidtheta(data.s,data.a);
+    omega_c = fminunc(@(omega_c)mse_linear(omega_c,dlogpi,A), omega_c, options);
+    A = omega_c' * dlogpi;
     A_unnorm = A;
     
     % Estimate natural gradient
-    dlogpi = policy.dlogPidtheta(data.s,data.a);
     A = (A-mean(A))/std(A);
     TD = (TD-mean(TD))/std(TD);
     if reg_type == 5
@@ -168,7 +176,7 @@ while iter <= maxiter
     norm_ng = norm(grad_nat);
     J = evaluate_policies(mdp, episodes_eval, steps_eval, policy.makeDeterministic);
     fprintf('%d) Entropy: %.2f,   mean(norm(A)): %e,   td_history(iter): %.2f,   Norm (NG): %e,   J: %e \n', ...
-        iter, entropy, mean(norm(A)), td_history(iter), norm_ng, J);
+        iter, entropy, mean(norm(A_unnorm)), td_history(iter), norm_ng, J);
     J_history(iter) = J;
     e_history(iter) = entropy;
     
@@ -180,4 +188,4 @@ while iter <= maxiter
 end
 
 t = policy.theta;
-save([folder RETR ALG '_' num2str(trial) '.mat'], 't', 'J_history', 'e_history', 'td_history');
+save([folder RETR 'C' ALG '_' num2str(trial) '.mat'], 't', 'J_history', 'e_history', 'td_history');

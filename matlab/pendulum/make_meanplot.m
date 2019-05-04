@@ -8,28 +8,42 @@ close all
 clear all
 figure()
 h = {};
-plot_every = 25; % plots data with the following indices [1, 5, 10, ..., end]
+plot_every = 1; % plots data with the following indices [1, 5, 10, ..., end]
 
 %% Change entries according to your needs
 folder = './data_single/';
-folder = './data_double/';
+% folder = './data_double/';
 separator = '_';
 
-filenames = {'a', 'Da', 'Ra', 'RDa', ...
-    't', 'Dt', 'Rt', 'RDt', ...
-    'v', 'Dv', 'Rv', 'RDv', };
-legendnames = {'GAE-REG', 'GAE-REG + DOUBLE', 'GAE-REG + RETR', 'GAE-REG + DOUBLE + RETR', ...
-    'TD-REG', 'TD-REG + DOUBLE', 'TD-REG + RETR', 'TD-REG + DOUBLE + RETR', ...
-    'NO-REG', 'NO-REG + DOUBLE', 'NO-REG + RETR', 'NO-REG + DOUBLE + RETR'};
-colors = {'y' 'y', 'y', 'y', ...
-    'b' 'b', 'b', 'b', ...
-    'r' 'r', 'r', 'r'};
-markers = {'+', '^', 'o', 'x', ...
-    '+', '^', 'o', 'x', ...
-    '+', '^', 'o', 'x'};
+% filenames = {'a', 'Da', 'Ra', 'RDa', ...
+%     't', 'Dt', 'Rt', 'RDt', ...
+%     'v', 'Dv', 'Rv', 'RDv', };
+% legendnames = {'GAE-REG', 'GAE-REG + DOUBLE', 'GAE-REG + RETR', 'GAE-REG + DOUBLE + RETR', ...
+%     'TD-REG', 'TD-REG + DOUBLE', 'TD-REG + RETR', 'TD-REG + DOUBLE + RETR', ...
+%     'NO-REG', 'NO-REG + DOUBLE', 'NO-REG + RETR', 'NO-REG + DOUBLE + RETR'};
+% colors = {'y' 'y', 'y', 'y', ...
+%     'b' 'b', 'b', 'b', ...
+%     'r' 'r', 'r', 'r'};
+% markers = {'+', '^', 'o', 'x', ...
+%     '+', '^', 'o', 'x', ...
+%     '+', '^', 'o', 'x'};
+
+% filenames = {'Rv', 'Rt', 'Ra', 'Rc', ...
+%     'RAc', 'Ri', 'Rc2t', 'Rc2a', 'RCc2a'};
+% legendnames = {'NO-REG + RETR', 'TD-REG + RETR', 'GAE-REG + RETR', 'CLIP-REG + RETR', ...
+%     'ALT-REG + RETR', 'INV-REG + RETR', 'c2treg', 'c2areg', 'Cc2areg'};
+filenames = {'Rv', 'Ra', 'Rc2a', 'RCc2a', 'Rc2a08', 'RCv'};
+legendnames = {'NO-REG + RETR', 'GAE-REG + RETR', 'c2areg', 'GAE-REG COMPAT', 'c2areg08', 'NO-REG COMPAT'};
+% filenames = {'Rc2a'};
+% legendnames = {'c2areg'};
+% colors = {'y'};
+% markers = {'+'};
+colors = {};
+markers = {};
 
 variable = 'J_history';
-% variable = 'min(td_history,inf)';
+% variable = 'td_history';
+% variable = 'e_history';
 title(variable, 'Interpreter', 'none')
 
 %% Plot
@@ -38,7 +52,7 @@ name_valid = [];
 for name = filenames
     counter = 1;
     dataMatrix = [];
-    for trial = 1 : 50
+    for trial = 1 : 999
         try
             load([folder name{:} separator num2str(trial) '.mat'], variable)
             dataMatrix(counter,:) = eval(variable);
