@@ -89,8 +89,10 @@ while iter <= maxiter
     
     % Train V
     V = omega'*data.phiV;
-    A = gae(data,V,mdp.gamma,lambda_trace,prob_ratio);
-    omega = fminunc(@(omega)mse_linear(omega,data.phiV,V+A), omega, options);
+    TDunfit = mean(gae(data,V,mdp.gamma,0,prob_ratio).^2);
+%     A = gae(data,V,mdp.gamma,lambda_trace,prob_ratio);
+%     omega = fminunc(@(omega)mse_linear(omega,data.phiV,V+A), omega, options);
+    omega = fminunc(@(omega)gae_residual(data, omega, data.phiV, mdp.gamma, lambda_trace, prob_ratio), omega, options);
     
     % Estimate A and TD
     V = omega'*data.phiV;
@@ -103,8 +105,8 @@ while iter <= maxiter
     % subtract V baseline again). Same result. The A_unnorm is used in the
     % working method as well, so it is not the normalization.
     dlogpi = policy.dlogPidtheta(data.s,data.a);
-    omega_c = fminunc(@(omega_c)mse_linear(omega_c,dlogpi,A), omega_c, options);
-    A = omega_c' * dlogpi;
+%     omega_c = fminunc(@(omega_c)mse_linear(omega_c,dlogpi,A), omega_c, options);
+%     A = omega_c' * dlogpi;
     A_unnorm = A;
     
     % Estimate natural gradient
@@ -175,8 +177,8 @@ while iter <= maxiter
     norm_g2 = norm(grad);
     norm_ng = norm(grad_nat);
     J = evaluate_policies(mdp, episodes_eval, steps_eval, policy.makeDeterministic);
-    fprintf('%d) Entropy: %.2f,   mean(norm(A)): %e,   td_history(iter): %.2f,   Norm (NG): %e,   J: %e \n', ...
-        iter, entropy, mean(norm(A_unnorm)), td_history(iter), norm_ng, J);
+    fprintf('%d) Entropy: %.2f,   TDunfit: %.2f,   td_history(iter): %.2f,   Norm (NG): %e,   J: %e \n', ...
+        iter, entropy, TDunfit, td_history(iter), norm_ng, J);
     J_history(iter) = J;
     e_history(iter) = entropy;
     
